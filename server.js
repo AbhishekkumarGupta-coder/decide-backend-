@@ -20,10 +20,19 @@ app.post('/api/decide', async (req, res) => {
       generationConfig: {
         temperature: 0.9,
         maxOutputTokens: 1024,
-        responseMimeType: 'application/json',
+        // removed responseMimeType — gemma doesn't support it
       },
     });
-    const text = result.response.text();
+
+    let text = result.response.text();
+
+    // strip markdown fences
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    // extract JSON object only
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) text = jsonMatch[0];
+
     res.json({ success: true, text });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
