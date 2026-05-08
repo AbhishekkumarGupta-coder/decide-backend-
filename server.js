@@ -5,7 +5,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -20,16 +26,11 @@ app.post('/api/decide', async (req, res) => {
       generationConfig: {
         temperature: 0.9,
         maxOutputTokens: 1024,
-        // removed responseMimeType — gemma doesn't support it
       },
     });
 
     let text = result.response.text();
-
-    // strip markdown fences
     text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-    // extract JSON object only
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) text = jsonMatch[0];
 
@@ -41,5 +42,5 @@ app.post('/api/decide', async (req, res) => {
 
 app.get('/', (req, res) => res.send('Decide API is running'));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
