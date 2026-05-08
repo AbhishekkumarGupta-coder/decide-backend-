@@ -31,8 +31,12 @@ app.post('/api/decide', async (req, res) => {
 
     let text = result.response.text();
     text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) text = jsonMatch[0];
+
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      text = text.substring(firstBrace, lastBrace + 1);
+    }
 
     res.json({ success: true, text });
   } catch (e) {
