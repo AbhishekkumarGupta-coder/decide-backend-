@@ -5,7 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import {
-  runFullOrderFlow,
+  runFoodOrderFlow,
+  runGroceryOrderFlow,
+  runBookTableFlow,
+  runPlanEveningFlow,
   getFoodOrders,
   searchRestaurants,
   getAddresses,
@@ -23,7 +26,7 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ── existing AI agent route ──
+// ── AI agent route ──
 app.post('/api/decide', async (req, res) => {
   try {
     const { systemPrompt, userPrompt } = req.body;
@@ -44,7 +47,7 @@ app.post('/api/decide', async (req, res) => {
   }
 });
 
-// ── NEW: Swiggy MCP routes ──
+// ── Swiggy MCP routes ──
 
 // Get user addresses
 app.get('/api/swiggy/addresses', async (req, res) => {
@@ -77,11 +80,44 @@ app.get('/api/swiggy/orders', async (req, res) => {
   }
 });
 
-// Full order flow — used by Solo Decision agent
+// Recipe 1 — Food order end-to-end
 app.post('/api/swiggy/order', async (req, res) => {
   try {
     const { query, budget } = req.body;
-    const result = await runFullOrderFlow(query, budget);
+    const result = await runFoodOrderFlow(query, budget);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Recipe 2 — Grocery order end-to-end
+app.post('/api/swiggy/groceries', async (req, res) => {
+  try {
+    const { query, useGoToItems } = req.body;
+    const result = await runGroceryOrderFlow(query, useGoToItems);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Recipe 3 — Book a table end-to-end
+app.post('/api/swiggy/book-table', async (req, res) => {
+  try {
+    const { query, guestCount, date } = req.body;
+    const result = await runBookTableFlow(query, guestCount, date);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Recipe 4 — Plan my evening (combined Food + Dineout)
+app.post('/api/swiggy/plan-evening', async (req, res) => {
+  try {
+    const { query, guestCount, budget } = req.body;
+    const result = await runPlanEveningFlow(query, guestCount, budget);
     res.json(result);
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
